@@ -14,9 +14,19 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route untuk Admin / Dokter / Super Admin
+Route::middleware(['auth', 'verified', 'role:super_admin,admin,dokter'])->group(function () {
+    Route::get('/admin/dashboard', function () {
+        return Inertia::render('Dashboard');
+    })->name('admin.dashboard');
+});
+
+// Route untuk Pasien
+Route::middleware(['auth', 'verified', 'role:pasien'])->group(function () {
+    Route::get('/pasien/home', function () {
+        return Inertia::render('Dashboard'); // Sementara render dashboard
+    })->name('pasien.home');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
