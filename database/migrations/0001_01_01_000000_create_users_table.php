@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
+            $table->string('username')->unique()->comment('Bisa diisi NIK (untuk pasien), atau NIP/Teks (untuk staf)');
             $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            // Menggunakan Enum agar tipe data lebih strict di tingkat database
+            $table->enum('role', ['super_admin', 'admin', 'dokter', 'pasien'])->default('pasien');
+            $table->boolean('is_active')->default(true)->comment('Soft disable akun agar data histori tidak rusak');
             $table->rememberToken();
             $table->timestamps();
         });
