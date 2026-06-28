@@ -4,7 +4,10 @@ import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm} from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
+
+const showPassword = ref(false);
 
 const form = useForm({
     name: '',
@@ -51,13 +54,23 @@ const submit = () => {
 
                 <div class="mt-4">
                     <InputLabel for="password" value="Password" />
-                    <TextInput id="password" :type="showPassword ? 'text' : 'password'" class="mt-1 block w-full" v-model="form.password" required />
+                    <div class="relative">
+                        <TextInput id="password" :type="showPassword ? 'text' : 'password'" class="mt-1 block w-full pr-10" v-model="form.password" required />
+                        <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-500 hover:text-gray-700">
+                            {{ showPassword ? 'Sembunyikan' : 'Lihat' }}
+                        </button>
+                    </div>
                     <InputError class="mt-2" :message="form.errors.password" />
                 </div>
 
                 <div class="mt-4">
                     <InputLabel for="password_confirmation" value="Konfirmasi Password" />
-                    <TextInput id="password_confirmation" :type="showPassword ? 'text' : 'password'" class="mt-1 block w-full" v-model="form.password_confirmation" required />
+                    <div class="relative">
+                        <TextInput id="password_confirmation" :type="showPassword ? 'text' : 'password'" class="mt-1 block w-full pr-10" v-model="form.password_confirmation" required />
+                        <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-500 hover:text-gray-700">
+                            {{ showPassword ? 'Sembunyikan' : 'Lihat' }}
+                        </button>
+                    </div>
                     <InputError class="mt-2" :message="form.errors.password_confirmation" />
                     </div>
             </div>
