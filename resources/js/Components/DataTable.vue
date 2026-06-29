@@ -22,11 +22,6 @@ defineProps({
     }
 });
 
-const emit = defineEmits(['update:search', 'edit', 'delete']);
-
-const onSearch = (e) => {
-    emit('update:search', e.target.value);
-};
 </script>
 
 <template>
@@ -35,8 +30,8 @@ const onSearch = (e) => {
         <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
             <div class="w-1/3">
                 <TextInput 
-                    :value="search" 
-                    @input="onSearch" 
+                    :model-value="search" 
+                    @update:model-value="$emit('update:search', $event)" 
                     type="search" 
                     placeholder="Cari data..." 
                     class="w-full text-sm" 
