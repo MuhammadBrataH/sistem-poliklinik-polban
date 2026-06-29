@@ -18,9 +18,36 @@ const userRole = page.props.auth.user.role;
             <nav class="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
                 <!-- Menu Admin & Super Admin -->
                 <template v-if="['super_admin', 'admin'].includes(userRole)">
-                    <Link :href="route('admin.dashboard')" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                    <Link :href="route('admin.dashboard')" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" :class="{ 'bg-blue-50 text-blue-600': route().current('admin.dashboard') }">
                         Dashboard Utama
                     </Link>
+                    
+                    <div class="pt-4 pb-1">
+                        <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Master Data</p>
+                    </div>
+                    
+                    <Link :href="route('admin.poli.index')" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" :class="{ 'bg-blue-50 text-blue-600': route().current('admin.poli.*') }">
+                        Data Poli
+                    </Link>
+                    <Link :href="route('admin.dokter.index')" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" :class="{ 'bg-blue-50 text-blue-600': route().current('admin.dokter.*') }">
+                        Data Dokter
+                    </Link>
+                    <Link :href="route('admin.tindakan.index')" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" :class="{ 'bg-blue-50 text-blue-600': route().current('admin.tindakan.*') }">
+                        Data Tindakan & Tarif
+                    </Link>
+                    <Link :href="route('admin.obat.index')" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" :class="{ 'bg-blue-50 text-blue-600': route().current('admin.obat.*') }">
+                        Data Obat
+                    </Link>
+                    <Link :href="route('admin.template-rujukan.index')" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" :class="{ 'bg-blue-50 text-blue-600': route().current('admin.template-rujukan.*') }">
+                        Template Rujukan
+                    </Link>
+                    <Link :href="route('admin.jadwal-praktik.index')" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors" :class="{ 'bg-blue-50 text-blue-600': route().current('admin.jadwal-praktik.*') }">
+                        Jadwal Praktik
+                    </Link>
+
+                    <div class="pt-4 pb-1">
+                        <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Operasional</p>
+                    </div>
                     <Link href="#" class="flex items-center px-4 py-2.5 text-sm font-medium rounded-lg text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors">
                         Kelola Antrean
                     </Link>
