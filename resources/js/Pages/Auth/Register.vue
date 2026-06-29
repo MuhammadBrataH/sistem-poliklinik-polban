@@ -12,6 +12,7 @@ const showPassword = ref(false);
 const form = useForm({
     name: '',
     username: '',
+    email: '',
     password: '',
     password_confirmation: '',
     nik: '',
@@ -50,6 +51,12 @@ const submit = () => {
                     <InputLabel for="username" value="Username (NIM / NIP / NIK)" />
                     <TextInput id="username" type="text" class="mt-1 block w-full" v-model="form.username" required autofocus />
                     <InputError class="mt-2" :message="form.errors.username" />
+                </div>
+
+                <div class="mt-4">
+                    <InputLabel for="email" value="Email (Opsional, untuk fitur Lupa Sandi)" />
+                    <TextInput id="email" type="email" class="mt-1 block w-full" v-model="form.email" />
+                    <InputError class="mt-2" :message="form.errors.email" />
                 </div>
 
                 <div class="mt-4">

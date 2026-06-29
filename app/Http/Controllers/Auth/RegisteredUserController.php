@@ -29,6 +29,7 @@ class RegisteredUserController extends Controller
         $request->validate([
             'username' => 'required|string|max:255|unique:'.User::class, // NIM/NIP/NIK
             'name' => 'required|string|max:255',
+            'email' => 'nullable|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'nik' => 'required|string|unique:pasiens,nik',
             'tempat_lahir' => 'required|string|max:255',
@@ -47,6 +48,7 @@ class RegisteredUserController extends Controller
             $user = User::create([
                 'username' => $request->username,
                 'name' => $request->name,
+                'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'role' => 'pasien',
                 'is_active' => true,
