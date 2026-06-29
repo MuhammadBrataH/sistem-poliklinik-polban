@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Obat;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class ObatController extends Controller
@@ -31,12 +32,19 @@ class ObatController extends Controller
             'nama_obat' => 'required|string|max:255',
             'satuan' => 'required|string|max:255',
             'stok' => 'required|integer|min:0',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
+
+        $gambarPath = null;
+        if ($request->hasFile('gambar')) {
+            $gambarPath = $request->file('gambar')->store('obat', 'public');
+        }
 
         Obat::create([
             'nama_obat' => $request->nama_obat,
             'satuan' => $request->satuan,
             'stok' => $request->stok,
+            'gambar' => $gambarPath,
         ]);
 
         return back()->with('success', 'Obat berhasil ditambahkan.');
@@ -48,19 +56,32 @@ class ObatController extends Controller
             'nama_obat' => 'required|string|max:255',
             'satuan' => 'required|string|max:255',
             'stok' => 'required|integer|min:0',
+            'gambar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $obat->update([
+        $data = [
             'nama_obat' => $request->nama_obat,
             'satuan' => $request->satuan,
             'stok' => $request->stok,
-        ]);
+        ];
+
+        if ($request->hasFile('gambar')) {
+            if ($obat->gambar) {
+                Storage::disk('public')->delete($obat->gambar);
+            }
+            $data['gambar'] = $request->file('gambar')->store('obat', 'public');
+        }
+
+        $obat->update($data);
 
         return back()->with('success', 'Data obat berhasil diperbarui.');
     }
 
     public function destroy(Obat $obat)
     {
+        if ($obat->gambar) {
+            Storage::disk('public')->delete($obat->gambar);
+        }
         $obat->delete();
         return back()->with('success', 'Obat berhasil dihapus.');
     }

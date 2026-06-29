@@ -36,6 +36,7 @@ const form = useForm({
     nama_obat: '',
     satuan: '',
     stok: 0,
+    gambar: null,
 });
 
 const openAddModal = () => {
@@ -52,6 +53,7 @@ const openEditModal = (obat) => {
     form.nama_obat = obat.nama_obat;
     form.satuan = obat.satuan;
     form.stok = obat.stok;
+    form.gambar = null; // Reset form gambar
     modalMode.value = 'edit';
     isModalOpen.value = true;
 };
@@ -73,7 +75,10 @@ const submitForm = () => {
             onSuccess: () => closeModal(),
         });
     } else {
-        form.put(route('admin.obat.update', form.id), {
+        form.transform((data) => ({
+            ...data,
+            _method: 'put',
+        })).post(route('admin.obat.update', form.id), {
             onSuccess: () => closeModal(),
         });
     }
@@ -97,6 +102,7 @@ const deleteObat = () => {
 
         <DataTable
             :columns="[
+                { key: 'gambar', label: 'Gambar' },
                 { key: 'nama_obat', label: 'Nama Obat' },
                 { key: 'satuan', label: 'Satuan' },
                 { key: 'stok', label: 'Stok Tersedia' },
@@ -111,12 +117,20 @@ const deleteObat = () => {
                     + Tambah Obat
                 </PrimaryButton>
             </template>
+
+            <template #col-gambar="{ row }">
+                <img v-if="row.gambar" :src="`/storage/${row.gambar}`" class="w-12 h-12 object-cover rounded-md border" alt="Gambar Obat" />
+                <div v-else class="w-12 h-12 bg-gray-100 rounded-md border flex items-center justify-center text-gray-400 text-xs">
+                    No Img
+                </div>
+            </template>
             
             <template #col-stok="{ row }">
                 <span :class="{'text-red-600 font-bold': row.stok <= 10, 'text-green-600 font-medium': row.stok > 10}">
                     {{ row.stok }}
                 </span>
-                <span v-if="row.stok <= 10" class="ml-2 text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">Menipis</span>
+                <span v-if="row.stok === 0" class="ml-2 text-xs text-red-500 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">Habis</span>
+                <span v-if="row.stok > 0 && row.stok <= 5" class="ml-2 text-xs text-orange-500 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-100">Menipis</span>
             </template>
         </DataTable>
 
@@ -145,6 +159,20 @@ const deleteObat = () => {
                             <TextInput id="stok" type="number" min="0" class="mt-1 block w-full" v-model="form.stok" required />
                             <InputError class="mt-2" :message="form.errors.stok" />
                         </div>
+                    </div>
+
+                    <div>
+                        <InputLabel for="gambar" value="Gambar Obat (Opsional)" />
+                        <input id="gambar" type="file" @change="e => form.gambar = e.target.files[0]" class="mt-1 block w-full text-sm text-gray-500
+                            file:mr-4 file:py-2 file:px-4
+                            file:rounded-md file:border-0
+                            file:text-sm file:font-semibold
+                            file:bg-indigo-50 file:text-indigo-700
+                            hover:file:bg-indigo-100
+                        " accept="image/png, image/jpeg, image/jpg" />
+                        <InputError class="mt-2" :message="form.errors.gambar" />
+                        <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG, JPEG | Maks: 2MB</p>
+                        <p v-if="modalMode === 'edit'" class="text-xs text-gray-500 mt-1">*Biarkan kosong jika tidak ingin mengubah gambar</p>
                     </div>
 
                     <div class="mt-6 flex justify-end gap-3 pt-4 border-t">
