@@ -27,6 +27,18 @@ watch(search, (value) => {
     );
 });
 
+// Helper for formatting date
+const formatTanggal = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat('id-ID', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    }).format(date);
+};
+
 // Modal State
 const isModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
@@ -35,10 +47,10 @@ const modalMode = ref('add');
 const form = useForm({
     id: null,
     dokter_id: '',
-    hari: 'Senin',
+    tanggal: '',
     jam_mulai: '',
     jam_selesai: '',
-    status: true,
+    kuota: 10,
 });
 
 const openAddModal = () => {
@@ -53,7 +65,7 @@ const openEditModal = (jadwal) => {
     form.clearErrors();
     form.id = jadwal.id;
     form.dokter_id = jadwal.dokter_id;
-    form.hari = jadwal.hari;
+    form.tanggal = jadwal.tanggal;
     
     // Format H:i
     const jmMulai = jadwal.jam_mulai.substring(0, 5);
@@ -61,7 +73,7 @@ const openEditModal = (jadwal) => {
     
     form.jam_mulai = jmMulai;
     form.jam_selesai = jmSelesai;
-    form.status = jadwal.status;
+    form.kuota = jadwal.kuota;
     
     modalMode.value = 'edit';
     isModalOpen.value = true;
@@ -109,9 +121,9 @@ const deleteJadwal = () => {
         <DataTable
             :columns="[
                 { key: 'dokter', label: 'Nama Dokter (Poli)' },
-                { key: 'hari', label: 'Hari Praktik' },
+                { key: 'tanggal', label: 'Tanggal Praktik' },
                 { key: 'jam', label: 'Jam Praktik' },
-                { key: 'status', label: 'Status Jadwal' },
+                { key: 'kuota', label: 'Sisa Kuota / Total' },
             ]"
             :data="jadwals"
             v-model:search="search"
@@ -129,8 +141,8 @@ const deleteJadwal = () => {
                 <div class="text-xs text-gray-500">{{ row.dokter.poli.nama_poli }}</div>
             </template>
 
-            <template #col-hari="{ row }">
-                <span class="font-semibold text-gray-700">{{ row.hari }}</span>
+            <template #col-tanggal="{ row }">
+                <span class="font-semibold text-gray-700">{{ formatTanggal(row.tanggal) }}</span>
             </template>
 
             <template #col-jam="{ row }">
@@ -142,13 +154,11 @@ const deleteJadwal = () => {
                 </div>
             </template>
 
-            <template #col-status="{ row }">
-                <span v-if="row.status" class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    Aktif
+            <template #col-kuota="{ row }">
+                <span class="font-medium" :class="{'text-red-600': row.sisa_kuota === 0, 'text-green-600': row.sisa_kuota > 0}">
+                    {{ row.sisa_kuota }}
                 </span>
-                <span v-else class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                    Libur / Tidak Aktif
-                </span>
+                <span class="text-gray-500 text-xs">/ {{ row.kuota }} pasien</span>
             </template>
         </DataTable>
 
@@ -171,20 +181,20 @@ const deleteJadwal = () => {
                         <InputError class="mt-2" :message="form.errors.dokter_id" />
                     </div>
 
-                    <div class="grid grid-cols-3 gap-4">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <InputLabel for="hari" value="Hari Praktik" />
-                            <select id="hari" v-model="form.hari" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
-                                <option value="Senin">Senin</option>
-                                <option value="Selasa">Selasa</option>
-                                <option value="Rabu">Rabu</option>
-                                <option value="Kamis">Kamis</option>
-                                <option value="Jumat">Jumat</option>
-                                <option value="Sabtu">Sabtu</option>
-                                <option value="Minggu">Minggu</option>
-                            </select>
-                            <InputError class="mt-2" :message="form.errors.hari" />
+                            <InputLabel for="tanggal" value="Tanggal Praktik" />
+                            <TextInput id="tanggal" type="date" class="mt-1 block w-full" v-model="form.tanggal" required />
+                            <InputError class="mt-2" :message="form.errors.tanggal" />
                         </div>
+                        <div>
+                            <InputLabel for="kuota" value="Kuota Pasien" />
+                            <TextInput id="kuota" type="number" min="1" class="mt-1 block w-full" v-model="form.kuota" required />
+                            <InputError class="mt-2" :message="form.errors.kuota" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
                             <InputLabel for="jam_mulai" value="Jam Mulai" />
                             <TextInput id="jam_mulai" type="time" class="mt-1 block w-full" v-model="form.jam_mulai" required />
@@ -197,13 +207,7 @@ const deleteJadwal = () => {
                         </div>
                     </div>
 
-                    <div class="flex items-center">
-                        <input type="checkbox" id="status" v-model="form.status" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" />
-                        <label for="status" class="ml-2 block text-sm text-gray-900">
-                            Jadwal Aktif (Bisa dipilih pasien)
-                        </label>
-                    </div>
-                    <InputError class="mt-2" :message="form.errors.status" />
+
 
                     <div class="mt-6 flex justify-end gap-3 pt-4 border-t">
                         <SecondaryButton @click="closeModal" :disabled="form.processing">
