@@ -65,7 +65,9 @@ const openEditModal = (jadwal) => {
     form.clearErrors();
     form.id = jadwal.id;
     form.dokter_id = jadwal.dokter_id;
-    form.tanggal = jadwal.tanggal;
+    
+    // Format YYYY-MM-DD untuk input type="date"
+    form.tanggal = jadwal.tanggal ? jadwal.tanggal.split('T')[0] : '';
     
     // Format H:i
     const jmMulai = jadwal.jam_mulai.substring(0, 5);
