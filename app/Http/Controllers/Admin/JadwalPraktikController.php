@@ -34,7 +34,7 @@ class JadwalPraktikController extends Controller
     {
         $request->validate([
             'dokter_id' => 'required|exists:dokters,id',
-            'tanggal' => 'required|date',
+            'tanggal' => 'required|date|after_or_equal:today',
             'jam_mulai' => 'required|date_format:H:i',
             'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
             'kuota' => 'required|integer|min:1',
@@ -72,7 +72,7 @@ class JadwalPraktikController extends Controller
     {
         $request->validate([
             'dokter_id' => 'required|exists:dokters,id',
-            'tanggal' => 'required|date',
+            'tanggal' => 'required|date|after_or_equal:today',
             'jam_mulai' => 'required|date_format:H:i',
             'jam_selesai' => 'required|date_format:H:i|after:jam_mulai',
             'kuota' => 'required|integer|min:1',

@@ -39,6 +39,9 @@ const formatTanggal = (dateString) => {
     }).format(date);
 };
 
+// Get today's date in YYYY-MM-DD format for min attribute
+const todayDate = new Date().toISOString().split('T')[0];
+
 // Modal State
 const isModalOpen = ref(false);
 const isDeleteModalOpen = ref(false);
@@ -186,7 +189,7 @@ const deleteJadwal = () => {
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <InputLabel for="tanggal" value="Tanggal Praktik" />
-                            <TextInput id="tanggal" type="date" class="mt-1 block w-full" v-model="form.tanggal" required />
+                            <TextInput id="tanggal" type="date" :min="todayDate" class="mt-1 block w-full" v-model="form.tanggal" required />
                             <InputError class="mt-2" :message="form.errors.tanggal" />
                         </div>
                         <div>
