@@ -5,14 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+Route::get('/', [\App\Http\Controllers\LandingController::class, 'index'])->name('landing');
 
 // Route untuk Admin / Dokter / Super Admin
 Route::middleware(['auth', 'verified', 'role:super_admin,admin,dokter'])->group(function () {
@@ -33,9 +26,18 @@ Route::middleware(['auth', 'verified', 'role:super_admin,admin'])->group(functio
 
 // Route untuk Pasien
 Route::middleware(['auth', 'verified', 'role:pasien'])->group(function () {
-    Route::get('/pasien/home', function () {
-        return Inertia::render('Dashboard'); // Sementara render dashboard
-    })->name('pasien.home');
+    // 1. Dashboard & History
+    Route::get('/pasien/home', [\App\Http\Controllers\Pasien\PatientDashboardController::class, 'index'])->name('pasien.dashboard');
+    Route::get('/pasien/history', [\App\Http\Controllers\Pasien\PatientDashboardController::class, 'history'])->name('pasien.history');
+    
+    // 2. Booking Antrean
+    Route::get('/pasien/antrean/create', [\App\Http\Controllers\Pasien\BookingController::class, 'create'])->name('pasien.antrean.create');
+    Route::post('/pasien/antrean', [\App\Http\Controllers\Pasien\BookingController::class, 'store'])->name('pasien.antrean.store');
+    
+    // 3. Setup Profile Pasien (sebelum bisa daftar antrean)
+    Route::get('/pasien/profile/setup', function() {
+        return Inertia\Inertia::render('Pasien/Profile/Setup');
+    })->name('pasien.profile.setup');
 });
 
 Route::middleware('auth')->group(function () {
