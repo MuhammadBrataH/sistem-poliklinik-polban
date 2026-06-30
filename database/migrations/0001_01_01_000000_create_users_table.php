@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('username')->unique()->comment('Bisa diisi NIK (untuk pasien), atau NIP/Teks (untuk staf)');
             $table->string('name');
+            $table->string('email')->nullable()->unique();
             $table->string('password');
             // Menggunakan Enum agar tipe data lebih strict di tingkat database
             $table->enum('role', ['super_admin', 'admin', 'dokter', 'pasien'])->default('pasien');

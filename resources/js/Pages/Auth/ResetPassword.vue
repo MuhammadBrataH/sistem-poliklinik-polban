@@ -5,6 +5,10 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import {ref} from 'vue';
+
+const showPassword = ref(false);
+
 
 const props = defineProps({
     email: {
