@@ -18,24 +18,19 @@ class LandingController extends Controller
      * mengambil data JadwalPraktik spesifik untuk hari ini, dilengkapi dengan 
      * relasi (Eager Loading) ke Dokter dan Poli untuk menghindari N+1 query problem.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // 1. Dapatkan tanggal hari ini menggunakan library Carbon bawaan Laravel.
-        $today = Carbon::today()->toDateString(); // Format: YYYY-MM-DD
+        // Ambil parameter tanggal dari URL, default ke hari ini
+        $selectedDate = $request->query('date', Carbon::today()->toDateString());
 
-        // 2. Query ke database:
-        // - where('tanggal', $today) -> filter hanya jadwal hari ini
-        // - with(['dokter.user', 'dokter.poli']) -> Eager loading relasi bertingkat.
-        //   Ini sangat penting agar kita tidak melakukan query database berulang-ulang 
-        //   di dalam loop Vue/Blade nanti (menjaga performa tetap secepat kilat).
-        $jadwalHariIni = JadwalPraktik::with(['dokter.user', 'dokter.poli'])
-            ->where('tanggal', $today)
+        // Ambil jadwal praktik berdasarkan tanggal yang dipilih
+        $jadwal = JadwalPraktik::with(['dokter.user', 'dokter.poli'])
+            ->where('tanggal', $selectedDate)
             ->get();
 
-        // 3. Render komponen Vue 'Welcome' (atau Landing) via Inertia.
-        // Kita juga bisa mengirimkan flag canLogin/canRegister jika diperlukan.
         return Inertia::render('Welcome', [
-            'jadwalHariIni' => $jadwalHariIni,
+            'jadwalHariIni' => $jadwal,
+            'selectedDate' => $selectedDate,
         ]);
     }
 }

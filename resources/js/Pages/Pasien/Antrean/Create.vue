@@ -12,10 +12,26 @@ const form = useForm({
     jadwal_praktik_id: '',
 });
 
-// Group jadwals by Poli for easier selection
+const getLocalToday = () => {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit'
+    });
+    const parts = formatter.formatToParts(now);
+    const p = {};
+    parts.forEach(part => { p[part.type] = part.value; });
+    return `${p.year}-${p.month}-${p.day}`;
+};
+
+const filterDate = ref(getLocalToday());
+
+// Group jadwals by Poli for easier selection (filtered by date)
 const groupedByPoli = computed(() => {
     const groups = {};
-    props.jadwals.forEach(j => {
+    // Potong substring T00:00:00Z dari tanggal bawaan Laravel agar bisa dibandingkan dengan string filterDate (YYYY-MM-DD)
+    const filteredJadwals = props.jadwals.filter(j => j.tanggal.substring(0, 10) === filterDate.value);
+    
+    filteredJadwals.forEach(j => {
         const poliName = j.dokter.poli.nama_poli;
         if (!groups[poliName]) groups[poliName] = [];
         groups[poliName].push(j);
@@ -24,6 +40,12 @@ const groupedByPoli = computed(() => {
 });
 
 const selectedPoli = ref('');
+
+import { watch } from 'vue';
+watch(filterDate, () => {
+    selectedPoli.value = '';
+    form.jadwal_praktik_id = '';
+});
 
 const togglePoli = (poliName) => {
     if (selectedPoli.value === poliName) {
@@ -140,10 +162,26 @@ const formatTanggal = (dateString) => {
             <div class="bg-white shadow-xl shadow-gray-200/50 rounded-3xl overflow-hidden border border-gray-100">
                 <form @submit.prevent="submit" class="p-6 sm:p-10 space-y-8">
                     
+                    <!-- Tanggal Kunjungan -->
+                    <div class="mb-4">
+                        <label class="block text-lg font-bold text-gray-800 mb-2">Tanggal Kunjungan</label>
+                        <input 
+                            type="date" 
+                            v-model="filterDate"
+                            :min="getLocalToday()"
+                            class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm sm:text-lg w-full sm:w-auto"
+                        >
+                    </div>
+
                     <!-- Langkah 1: Pilih Poli -->
-                    <div>
+                    <div class="pt-6 border-t border-gray-100">
                         <label class="block text-lg font-bold text-gray-800 mb-4">1. Pilih Poliklinik Tujuan</label>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        
+                        <div v-if="Object.keys(groupedByPoli).length === 0" class="p-6 bg-gray-50 border border-dashed border-gray-300 rounded-xl text-center text-gray-500">
+                            Tidak ada jadwal praktik yang tersedia pada tanggal ini.
+                        </div>
+                        
+                        <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div v-for="(jadwalList, poliName) in groupedByPoli" :key="poliName"
                                 @click="togglePoli(poliName)"
                                 class="relative flex flex-col p-5 cursor-pointer rounded-2xl border-2 transition-all select-none"

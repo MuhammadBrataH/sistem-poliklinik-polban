@@ -1,7 +1,7 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
 
-defineProps({
+const props = defineProps({
     canLogin: {
         type: Boolean,
     },
@@ -11,8 +11,58 @@ defineProps({
     jadwalHariIni: {
         type: Array,
         default: () => [],
+    },
+    selectedDate: {
+        type: String,
+        default: ''
     }
 });
+
+import { ref } from 'vue';
+import { router } from '@inertiajs/vue3';
+
+const filterDate = ref(props.selectedDate);
+
+const onDateChange = () => {
+    router.get(route('landing'), { date: filterDate.value }, { preserveState: true, preserveScroll: true });
+};
+
+const isJadwalExpired = (jadwal) => {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false
+    });
+    
+    const parts = formatter.formatToParts(now);
+    const p = {};
+    parts.forEach(part => { p[part.type] = part.value; });
+    
+    const todayStr = `${p.year}-${p.month}-${p.day}`;
+    let currentHour = parseInt(p.hour);
+    if (currentHour === 24) currentHour = 0;
+    const currentMinute = parseInt(p.minute);
+    
+    const jadwalTanggal = jadwal.tanggal.substring(0, 10);
+    
+    if (jadwalTanggal < todayStr) return true;
+    
+    if (jadwalTanggal === todayStr) {
+        const [endHour, endMinute] = jadwal.jam_selesai.split(':');
+        return (currentHour * 60 + currentMinute) >= (parseInt(endHour) * 60 + parseInt(endMinute));
+    }
+    return false;
+};
+
+const isJadwalDisabled = (jadwal) => jadwal.sisa_kuota <= 0 || isJadwalExpired(jadwal);
+
+const getDisabledReason = (jadwal) => {
+    const noKuota = jadwal.sisa_kuota <= 0;
+    const expired = isJadwalExpired(jadwal);
+    if (noKuota && expired) return 'Waktu habis & Kuota penuh';
+    if (noKuota) return 'Kuota habis';
+    if (expired) return 'Waktu praktik berakhir';
+    return '';
+};
 </script>
 
 <template>
@@ -74,13 +124,27 @@ defineProps({
                     </div>
                 </div>
 
-                <!-- Jadwal Hari Ini Section -->
+                <!-- Jadwal Praktik Section -->
                 <div class="mt-12 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-                    <div class="flex items-center justify-between mb-6">
-                        <h2 class="text-2xl font-bold text-gray-800">Jadwal Praktik Hari Ini</h2>
-                        <span class="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full flex items-center gap-1">
-                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Live
-                        </span>
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                        <div class="flex items-center gap-3">
+                            <h2 class="text-2xl font-bold text-gray-800">Jadwal Praktik</h2>
+                            <span v-if="filterDate === new Date().toLocaleDateString('en-CA', {timeZone: 'Asia/Jakarta'})" class="px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Hari Ini
+                            </span>
+                        </div>
+                        
+                        <!-- Date Filter -->
+                        <div class="flex items-center gap-2">
+                            <label for="date-filter" class="text-sm font-medium text-gray-600">Pilih Tanggal:</label>
+                            <input 
+                                type="date" 
+                                id="date-filter"
+                                v-model="filterDate"
+                                @change="onDateChange"
+                                class="border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-lg shadow-sm sm:text-sm"
+                            >
+                        </div>
                     </div>
 
                     <div v-if="jadwalHariIni.length === 0" class="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
@@ -88,13 +152,17 @@ defineProps({
                     </div>
 
                     <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div v-for="jadwal in jadwalHariIni" :key="jadwal.id" class="bg-gray-50 border border-gray-100 p-5 rounded-xl hover:border-indigo-200 hover:shadow-md transition cursor-default">
+                        <div v-for="jadwal in jadwalHariIni" :key="jadwal.id" 
+                            class="border p-5 rounded-xl transition cursor-default relative overflow-hidden"
+                            :class="isJadwalDisabled(jadwal) ? 'bg-gray-50 border-gray-200 opacity-70' : 'bg-white border-gray-100 hover:border-indigo-200 hover:shadow-md'"
+                        >
                             <div class="flex items-start justify-between mb-4">
                                 <div>
                                     <h3 class="font-bold text-gray-900">{{ jadwal.dokter.user.name }}</h3>
                                     <p class="text-sm text-indigo-600 font-medium">{{ jadwal.dokter.poli.nama_poli }}</p>
                                 </div>
-                                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold"
+                                     :class="isJadwalDisabled(jadwal) ? 'bg-gray-200 text-gray-500' : 'bg-indigo-100 text-indigo-700'">
                                     {{ jadwal.dokter.user.name.charAt(0) }}
                                 </div>
                             </div>
@@ -105,9 +173,12 @@ defineProps({
                                     {{ jadwal.jam_mulai.substring(0,5) }} - {{ jadwal.jam_selesai.substring(0,5) }} WIB
                                 </div>
                                 <div class="flex items-center justify-between text-sm mt-2">
-                                    <span class="text-gray-500">Sisa Kuota:</span>
-                                    <span class="font-bold" :class="jadwal.sisa_kuota > 0 ? 'text-green-600' : 'text-red-600'">
-                                        {{ jadwal.sisa_kuota > 0 ? jadwal.sisa_kuota + ' Pasien' : 'Habis' }}
+                                    <span class="text-gray-500">Status:</span>
+                                    <span v-if="isJadwalDisabled(jadwal)" class="font-bold text-red-600 text-xs bg-red-50 px-2 py-1 rounded">
+                                        {{ getDisabledReason(jadwal) }}
+                                    </span>
+                                    <span v-else class="font-bold text-green-600">
+                                        Sisa {{ jadwal.sisa_kuota }} Pasien
                                     </span>
                                 </div>
                             </div>
