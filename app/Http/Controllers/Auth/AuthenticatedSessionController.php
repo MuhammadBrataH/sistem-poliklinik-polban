@@ -34,12 +34,22 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $role = $request->user()->role;
+        $intendedUrl = $request->session()->pull('url.intended');
 
         if ($role === 'pasien') {
-            return redirect()->intended(route('pasien.home', absolute: false));
+            // Jika ada intended URL dan itu mengarah ke halaman pasien, redirect ke sana
+            if ($intendedUrl && \Illuminate\Support\Str::contains($intendedUrl, '/pasien')) {
+                return redirect()->to($intendedUrl);
+            }
+            return redirect()->route('pasien.dashboard');
         }
 
-        return redirect()->intended(route('admin.dashboard', absolute: false));
+        // Untuk Admin / Dokter
+        // Jika ada intended URL dan itu mengarah ke halaman admin, redirect ke sana
+        if ($intendedUrl && \Illuminate\Support\Str::contains($intendedUrl, '/admin')) {
+            return redirect()->to($intendedUrl);
+        }
+        return redirect()->route('admin.dashboard');
     }
 
     /**

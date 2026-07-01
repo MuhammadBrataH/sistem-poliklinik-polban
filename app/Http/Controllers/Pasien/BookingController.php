@@ -19,6 +19,22 @@ class BookingController extends Controller
     public function create()
     {
         $today = Carbon::today()->toDateString();
+        $user = Auth::user();
+        $pasien = $user->pasien;
+
+        // Cegah akses halaman pendaftaran jika sudah punya antrean aktif hari ini
+        if ($pasien) {
+            $punyaAntreanAktif = Antrean::where('pasien_id', $pasien->id)
+                ->whereHas('jadwalPraktik', function ($q) use ($today) {
+                    $q->where('tanggal', $today);
+                })
+                ->whereNotIn('status', ['selesai', 'batal'])
+                ->exists();
+
+            if ($punyaAntreanAktif) {
+                return redirect()->route('pasien.dashboard')->with('error', 'Anda sudah memiliki antrean aktif hari ini. Selesaikan atau batalkan terlebih dahulu.');
+            }
+        }
         
         // Ambil jadwal praktik yang tersedia hari ini atau ke depannya, sisa kuota > 0
         $jadwals = JadwalPraktik::with(['dokter.user', 'dokter.poli'])
