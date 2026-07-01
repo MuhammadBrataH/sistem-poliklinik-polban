@@ -68,7 +68,7 @@ defineProps({
                         Sistem antrean pintar Poliklinik Polban. Daftar secara online dari mana saja, pantau antrean secara real-time, dan datang tepat waktu.
                     </p>
                     <div class="flex justify-center gap-4">
-                        <Link :href="route('pasien.antrean.create')" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all">
+                        <Link :href="route('pasien.dashboard')" class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all">
                             Ambil Antrean Sekarang
                         </Link>
                     </div>

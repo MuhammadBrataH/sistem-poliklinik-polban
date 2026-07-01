@@ -36,10 +36,10 @@ class BookingController extends Controller
             }
         }
         
-        // Ambil jadwal praktik yang tersedia hari ini atau ke depannya, sisa kuota > 0
+        // Ambil jadwal praktik yang tersedia hari ini atau ke depannya
+        // Kita tidak filter sisa_kuota > 0 di sini agar frontend bisa menampilkannya sebagai disabled (habis)
         $jadwals = JadwalPraktik::with(['dokter.user', 'dokter.poli'])
             ->where('tanggal', '>=', $today)
-            ->where('sisa_kuota', '>', 0)
             ->get();
 
         return Inertia::render('Pasien/Antrean/Create', [

@@ -25,6 +25,83 @@ const groupedByPoli = computed(() => {
 
 const selectedPoli = ref('');
 
+const togglePoli = (poliName) => {
+    if (selectedPoli.value === poliName) {
+        selectedPoli.value = '';
+    } else {
+        selectedPoli.value = poliName;
+    }
+    form.jadwal_praktik_id = '';
+};
+
+const isJadwalExpired = (jadwal) => {
+    // 1. Ambil waktu HARI INI secara spesifik di zona Jakarta (WIB)
+    const now = new Date();
+    
+    // Ekstrak waktu WIB menggunakan Intl (menghindari bug zona waktu browser)
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Jakarta',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+    
+    const parts = formatter.formatToParts(now);
+    const p = {};
+    parts.forEach(part => { p[part.type] = part.value; });
+    
+    const todayStr = `${p.year}-${p.month}-${p.day}`;
+    let currentHour = parseInt(p.hour);
+    if (currentHour === 24) currentHour = 0; // Fix untuk browser tertentu
+    const currentMinute = parseInt(p.minute);
+    
+    // 2. Bersihkan tanggal jadwal (membuang jam dari ISO string Laravel misal T00:00:00.000000Z)
+    const jadwalTanggal = jadwal.tanggal.substring(0, 10);
+    
+    // 3. Logika Perbandingan
+    if (jadwalTanggal < todayStr) return true;
+    
+    if (jadwalTanggal === todayStr) {
+        const [endHour, endMinute] = jadwal.jam_selesai.split(':');
+        const endTotalMinutes = parseInt(endHour) * 60 + parseInt(endMinute);
+        const currentTotalMinutes = currentHour * 60 + currentMinute;
+        
+        // Expired jika waktu saat ini (WIB) sudah melebihi atau sama dengan jam selesai
+        return currentTotalMinutes >= endTotalMinutes;
+    }
+    
+    return false; // Jadwal di masa depan (besok dsb)
+};
+
+const isJadwalDisabled = (jadwal) => {
+    return jadwal.sisa_kuota <= 0 || isJadwalExpired(jadwal);
+};
+
+const getDisabledReason = (jadwal) => {
+    const noKuota = jadwal.sisa_kuota <= 0;
+    const expired = isJadwalExpired(jadwal);
+    
+    if (noKuota && expired) return 'Waktu praktik telah lewat dan kuota habis';
+    if (noKuota) return 'Kuota antrean habis';
+    if (expired) return 'Waktu praktik telah berakhir';
+    return '';
+};
+
+const toggleJadwal = (jadwalId) => {
+    // Cari object jadwal
+    const jadwal = props.jadwals.find(j => j.id === jadwalId);
+    if (jadwal && isJadwalDisabled(jadwal)) return; // Prevent selection
+
+    if (form.jadwal_praktik_id === jadwalId) {
+        form.jadwal_praktik_id = '';
+    } else {
+        form.jadwal_praktik_id = jadwalId;
+    }
+};
+
 // Filter jadwals based on selected poli
 const availableJadwals = computed(() => {
     if (!selectedPoli.value) return [];
@@ -67,18 +144,18 @@ const formatTanggal = (dateString) => {
                     <div>
                         <label class="block text-lg font-bold text-gray-800 mb-4">1. Pilih Poliklinik Tujuan</label>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <label v-for="(jadwalList, poliName) in groupedByPoli" :key="poliName"
-                                class="relative flex flex-col p-5 cursor-pointer rounded-2xl border-2 transition-all"
+                            <div v-for="(jadwalList, poliName) in groupedByPoli" :key="poliName"
+                                @click="togglePoli(poliName)"
+                                class="relative flex flex-col p-5 cursor-pointer rounded-2xl border-2 transition-all select-none"
                                 :class="selectedPoli === poliName ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'"
                             >
-                                <input type="radio" v-model="selectedPoli" :value="poliName" class="sr-only" @change="form.jadwal_praktik_id = ''">
                                 <span class="font-bold text-gray-900 text-lg">{{ poliName }}</span>
-                                <span class="text-sm text-gray-500 mt-1">{{ jadwalList.length }} jadwal tersedia</span>
+                                <span class="text-sm text-gray-500 mt-1">{{ jadwalList.length }} jadwal</span>
                                 
                                 <div v-if="selectedPoli === poliName" class="absolute top-4 right-4 text-indigo-600">
                                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
                                 </div>
-                            </label>
+                            </div>
                         </div>
                     </div>
 
@@ -86,11 +163,15 @@ const formatTanggal = (dateString) => {
                     <div v-if="selectedPoli" class="animate-in fade-in slide-in-from-bottom-4 duration-500">
                         <label class="block text-lg font-bold text-gray-800 mb-4">2. Pilih Jadwal Praktik</label>
                         <div class="space-y-4">
-                            <label v-for="jadwal in availableJadwals" :key="jadwal.id"
-                                class="relative flex flex-col sm:flex-row sm:items-center justify-between p-5 cursor-pointer rounded-2xl border-2 transition-all"
-                                :class="form.jadwal_praktik_id === jadwal.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'"
+                            <div v-for="jadwal in availableJadwals" :key="jadwal.id"
+                                @click="toggleJadwal(jadwal.id)"
+                                class="relative flex flex-col sm:flex-row sm:items-center justify-between p-5 rounded-2xl border-2 transition-all select-none"
+                                :class="[
+                                    isJadwalDisabled(jadwal)
+                                        ? 'border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed'
+                                        : 'cursor-pointer ' + (form.jadwal_praktik_id === jadwal.id ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300 hover:bg-white')
+                                ]"
                             >
-                                <input type="radio" v-model="form.jadwal_praktik_id" :value="jadwal.id" class="sr-only">
                                 <div>
                                     <h4 class="font-bold text-gray-900">dr. {{ jadwal.dokter.user.name }}</h4>
                                     <div class="text-sm text-gray-600 flex items-center gap-2 mt-1">
@@ -104,7 +185,10 @@ const formatTanggal = (dateString) => {
                                 </div>
                                 
                                 <div class="mt-4 sm:mt-0 text-left sm:text-right">
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold"
+                                    <div v-if="isJadwalDisabled(jadwal)" class="text-xs font-bold text-red-600 bg-red-100 px-3 py-1 rounded-full inline-block">
+                                        {{ getDisabledReason(jadwal) }}
+                                    </div>
+                                    <span v-else class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold"
                                         :class="jadwal.sisa_kuota > 5 ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'">
                                         Sisa Kuota: {{ jadwal.sisa_kuota }}
                                     </span>
@@ -113,7 +197,7 @@ const formatTanggal = (dateString) => {
                                 <div v-if="form.jadwal_praktik_id === jadwal.id" class="absolute top-4 right-4 sm:top-1/2 sm:-translate-y-1/2 text-indigo-600 hidden sm:block">
                                     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
                                 </div>
-                            </label>
+                            </div>
                         </div>
                         <InputError :message="form.errors.jadwal_praktik_id" class="mt-2" />
                     </div>

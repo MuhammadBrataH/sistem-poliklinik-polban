@@ -12,6 +12,11 @@ const formatTanggal = (dateString) => {
     }).format(new Date(dateString));
 };
 
+const formatJam = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+};
+
 const getStatusColor = (status) => {
     switch (status) {
         case 'selesai': return 'bg-green-100 text-green-800 border-green-200';
@@ -52,13 +57,17 @@ const getStatusColor = (status) => {
                     </div>
 
                     <div class="flex-grow">
-                        <div class="flex items-center gap-3 mb-2">
+                        <div class="flex flex-wrap items-center gap-3 mb-2">
                             <span class="px-2.5 py-0.5 rounded-full text-xs font-bold border uppercase tracking-wider" :class="getStatusColor(antrean.status)">
                                 {{ antrean.status.replace('_', ' ') }}
                             </span>
-                            <span class="text-sm font-medium text-gray-500 flex items-center gap-1">
+                            <span class="text-sm font-medium text-gray-500 flex items-center gap-1" title="Tanggal Praktik">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 {{ formatTanggal(antrean.jadwal_praktik.tanggal) }}
+                            </span>
+                            <span class="text-sm font-medium text-gray-500 flex items-center gap-1" title="Waktu pembaruan status">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                Pukul {{ formatJam(antrean.updated_at) }}
                             </span>
                         </div>
                         

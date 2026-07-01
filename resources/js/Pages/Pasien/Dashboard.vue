@@ -28,13 +28,22 @@ const formatTanggal = (dateString) => {
                     <p class="text-gray-500 text-sm mt-1">Pantau status antrean Anda hari ini.</p>
                 </div>
                 
-                <Link
-                    v-if="!antreanAktifSaya"
-                    :href="route('pasien.antrean.create')"
-                    class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md transition-colors w-full sm:w-auto text-center"
-                >
-                    + Ambil Antrean Baru
-                </Link>
+                <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <Link
+                        :href="route('pasien.history')"
+                        class="px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-xl shadow-sm transition-colors text-center"
+                    >
+                        Riwayat Kunjungan
+                    </Link>
+                    
+                    <Link
+                        v-if="!antreanAktifSaya"
+                        :href="route('pasien.antrean.create')"
+                        class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md transition-colors text-center"
+                    >
+                        + Ambil Antrean Baru
+                    </Link>
+                </div>
             </div>
 
             <!-- Jika tidak ada antrean -->
